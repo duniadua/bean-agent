@@ -76,7 +76,22 @@ REGISTERED_APPS='{"frontend":"/var/www/frontend"}'
    ```bash
    echo 'DOTENV_PRIVATE_KEY="8067dbf8c869079d490e964e85d05d2da37d4496a112130759c2ac0bf4beff50"' > .env.keys
    ```
-   *(Atau tambahkan `export DOTENV_PRIVATE_KEY="..."` ke `~/.bashrc`).*
+3. **Cara Menambah atau Mengubah `REGISTERED_APPS` (Saat .env Sudah Terenkripsi):**
+   Jika file `.env` sudah terenkripsi dan Anda ingin menambah/mengubah daftar folder project:
+   
+   * **Opsi 1: Menggunakan Perintah `dotenvx set` (Paling Praktis):**
+     Langsung jalankan perintah ini tanpa perlu membuka enkripsi:
+     ```bash
+     dotenvx set REGISTERED_APPS '{"frontend":"/var/www/frontend","backend":"/var/www/backend-api"}'
+     ```
+     `dotenvx` akan otomatis mengenkripsi kembali nilai baru tersebut ke dalam `.env`.
+
+   * **Opsi 2: Edit Manual via Decrypt & Encrypt:**
+     ```bash
+     dotenvx decrypt          # Kembalikan .env ke plaintext untuk diedit
+     nano .env                # Edit REGISTERED_APPS sesuai keinginan
+     dotenvx encrypt          # Enkripsi kembali file .env setelah selesai
+     ```
 
 ---
 
