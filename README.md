@@ -51,32 +51,51 @@
 ## 🚀 Panduan Instalasi & Penggunaan
 
 ### 1. Pasang Dependensi
-Pastikan dependensi Python yang dibutuhkan sudah terpasang:
+Anda dapat memasang dependensi langsung untuk user lokal tanpa perlu `.venv` (aman tanpa merusak paket sistem):
 
 ```bash
-pip install google-genai python-dotenv pytest
+python3 -m pip install --user google-genai python-dotenv pytest
 ```
 
-### 2. Konfigurasi Variabel Environment (`.env`)
-Buat berkas `.env` di folder utama dengan format berikut:
+### 2. Konfigurasi Variabel Environment & Kunci Dekripsi
 
+#### A. Jika menggunakan file `.env` biasa (Plaintext lokal):
+Buat berkas `.env` dengan format:
 ```env
-# Kunci API Gemini Anda
 GEMINI_API_KEY="AIzaSy..."
-
-# Daftar aplikasi terdaftar dalam format JSON (nama aplikasi: path lokal direktori)
-REGISTERED_APPS='{
-  "frontend": "/Users/macbook/apps/frontend-repo",
-  "backend-api": "/Users/macbook/apps/backend-repo"
-}'
+REGISTERED_APPS='{"frontend":"/var/www/frontend"}'
 ```
 
-> **Catatan**: Jika menggunakan `dotenvx` untuk enkripsi variabel environment, file tetap dapat dimuat dengan aman di runtime.
+#### B. Jika menggunakan `.env` Terenkripsi (dengan `dotenvx`):
+1. **Di Laptop Anda (Untuk mengambil private key):**
+   ```bash
+   dotenvx keypair
+   ```
+2. **Di Server Production (Simpan private key sekali secara permanen):**
+   Buat file `.env.keys` di folder proyek:
+   ```bash
+   echo 'DOTENV_PRIVATE_KEY="8067dbf8c869079d490e964e85d05d2da37d4496a112130759c2ac0bf4beff50"' > .env.keys
+   ```
+   *(Atau tambahkan `export DOTENV_PRIVATE_KEY="..."` ke `~/.bashrc`).*
+
+---
 
 ### 3. Menjalankan Agent
 
-Jalankan skrip utama:
+Pilih perintah sesuai metode yang Anda gunakan:
 
+#### ✅ Menggunakan `dotenvx` (Rekomendasi - Terenkripsi):
+Jika sudah memasang `dotenvx` dan memiliki `.env.keys` atau `DOTENV_PRIVATE_KEY`:
+```bash
+dotenvx run -- python3 bean_agent.py
+```
+
+*Jika ingin langsung meng-inject key dalam satu baris perintah tanpa file `.env.keys`:*
+```bash
+DOTENV_PRIVATE_KEY="8067dbf8c869079d490e964e85d05d2da37d4496a112130759c2ac0bf4beff50" dotenvx run -- python3 bean_agent.py
+```
+
+#### 🔹 Tanpa `dotenvx` (Menggunakan `.env` biasa):
 ```bash
 python3 bean_agent.py
 ```
