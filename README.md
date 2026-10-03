@@ -125,16 +125,16 @@ python3 bean_agent.py
  Ketik 'exit' atau 'quit' untuk keluar.
 =================================================
 
-Admin ❯ Bagaimana status aplikasi backend-api saat ini?
-Agent ❯ Memeriksa status git dan container backend-api...
+User ❯ Bagaimana status aplikasi backend-api saat ini?
+Bean ❯ Memeriksa status git dan container backend-api...
 
-Admin ❯ Tolong cek apakah sintaks file docker-compose di backend-api sudah valid?
-Agent ❯ Konfigurasi Docker Compose untuk 'backend-api' VALID (tidak ada error sintaks).
+User ❯ Tolong cek apakah sintaks file docker-compose di backend-api sudah valid?
+Bean ❯ Konfigurasi Docker Compose untuk 'backend-api' VALID (tidak ada error sintaks).
 
-Admin ❯ Tampilkan 20 baris log terakhir service db di backend-api
-Agent ❯ Menampilkan log container service 'db'...
+User ❯ Tampilkan 20 baris log terakhir service db di backend-api
+Bean ❯ Menampilkan log container service 'db'...
 
-Admin ❯ Tolong deploy update terbaru untuk frontend
+User ❯ Tolong deploy update terbaru untuk frontend
 [⚠️  PERINGATAN SISTEM] Agent meminta otorisasi deployment untuk: frontend
 Lanjutkan deployment (git pull & docker build) untuk frontend? [y/N]: y
 ```

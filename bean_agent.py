@@ -2,9 +2,15 @@ import os
 import sys
 import subprocess
 import json
+import time
+import atexit
+try:
+    import readline
+except ImportError:
+    readline = None
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
+from google.genai import types, errors
 
 # Muat variabel dari berkas .env
 load_dotenv()
@@ -468,6 +474,36 @@ def cleanup_or_remove_app_resources(app_name: str, target_action: str) -> str:
     return f"Tindakan '{target_action}' berhasil dieksekusi oleh izin administrator.\nLog Output:\n{res}"
 
 
+def is_unavailable_503_error(e: Exception) -> bool:
+    """Mengecek apakah exception merupakan error 503 UNAVAILABLE dari Gemini."""
+    if isinstance(e, errors.APIError):
+        if getattr(e, "code", None) == 503 or getattr(e, "status", None) == "UNAVAILABLE":
+            return True
+    err_str = str(e)
+    return "503" in err_str and ("UNAVAILABLE" in err_str or "high demand" in err_str)
+
+
+def send_message_with_retry(chat, message: str, delays: list[int] = [60, 120, 300]):
+    """
+    Mengirim pesan ke chat Gemini dengan mekanisme retry exponential backoff.
+    Jika mendapati error 503 UNAVAILABLE (high demand), akan mencoba ulang sebanyak
+    panjang delays (default 3x: 1 menit, 2 menit, 5 menit).
+    """
+    max_retries = len(delays)
+    for attempt, delay in enumerate(delays, start=1):
+        try:
+            return chat.send_message(message)
+        except Exception as e:
+            if is_unavailable_503_error(e) and attempt <= max_retries:
+                minutes = delay // 60
+                print(f"\n⚠️  [503 UNAVAILABLE] Model sedang mengalami lonjakan beban (high demand).")
+                print(f"⏳ Menunggu backoff {minutes} menit sebelum retry ({attempt}/{max_retries})...")
+                time.sleep(delay)
+            else:
+                raise e
+    return chat.send_message(message)
+
+
 # ==========================================
 # 3. CLI CHAT INTERFACE
 # ==========================================
@@ -523,17 +559,28 @@ def main():
     print(" Ketik 'exit' atau 'quit' untuk keluar.")
     print("=================================================\n")
     
+    # Konfigurasi riwayat perintah (command history navigation)
+    history_file = os.path.expanduser("~/.bean_agent_history")
+    if readline:
+        try:
+            if os.path.exists(history_file):
+                readline.read_history_file(history_file)
+            readline.set_history_length(1000)
+            atexit.register(readline.write_history_file, history_file)
+        except Exception:
+            pass
+
     while True:
         try:
-            user_msg = input("Admin ❯ ")
+            user_msg = input("User ❯ ")
             if user_msg.lower() in ['exit', 'quit']:
                 print("Sesi ditutup.")
                 break
             if not user_msg.strip():
                 continue
                 
-            response = chat.send_message(user_msg)
-            print(f"Agent ❯ {response.text}\n")
+            response = send_message_with_retry(chat, user_msg)
+            print(f"Bean ❯ {response.text}\n")
             
         except KeyboardInterrupt:
             print("\nSesi ditutup.")

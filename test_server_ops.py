@@ -291,3 +291,65 @@ class TestSmokeSystem:
             ]
         )
         assert len(config.tools) == 7
+
+
+# ==========================================
+# 5. RETRY & BACKOFF TESTS
+# ==========================================
+
+class TestRetryMechanism:
+    def test_is_unavailable_503_error(self):
+        from google.genai import errors
+        err_api = errors.APIError(503, {'error': {'code': 503, 'message': 'This model is currently experiencing high demand.', 'status': 'UNAVAILABLE'}})
+        assert server_ops.is_unavailable_503_error(err_api) is True
+
+        err_generic_str = Exception("[Error] 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}")
+        assert server_ops.is_unavailable_503_error(err_generic_str) is True
+
+        err_other = Exception("400 INVALID_ARGUMENT")
+        assert server_ops.is_unavailable_503_error(err_other) is False
+
+    @patch("time.sleep")
+    def test_send_message_with_retry_succeeds_on_second_attempt(self, mock_sleep):
+        from google.genai import errors
+        mock_chat = MagicMock()
+        err_503 = errors.APIError(503, {'error': {'code': 503, 'message': 'This model is currently experiencing high demand.', 'status': 'UNAVAILABLE'}})
+        mock_response = MagicMock()
+        mock_response.text = "Hello!"
+        mock_chat.send_message.side_effect = [err_503, mock_response]
+
+        res = server_ops.send_message_with_retry(mock_chat, "test message", delays=[60, 120, 300])
+
+        assert res.text == "Hello!"
+        assert mock_chat.send_message.call_count == 2
+        mock_sleep.assert_called_once_with(60)
+
+    @patch("time.sleep")
+    def test_send_message_with_retry_exhausts_retries(self, mock_sleep):
+        from google.genai import errors
+        mock_chat = MagicMock()
+        err_503 = errors.APIError(503, {'error': {'code': 503, 'message': 'This model is currently experiencing high demand.', 'status': 'UNAVAILABLE'}})
+        mock_chat.send_message.side_effect = [err_503, err_503, err_503, err_503]
+
+        with pytest.raises(errors.APIError):
+            server_ops.send_message_with_retry(mock_chat, "test message", delays=[60, 120, 300])
+
+        assert mock_chat.send_message.call_count == 4
+        assert mock_sleep.call_count == 3
+        from unittest.mock import call
+        mock_sleep.assert_has_calls([
+            call(60),
+            call(120),
+            call(300)
+        ])
+
+    @patch("time.sleep")
+    def test_send_message_with_retry_non_503_error_fails_immediately(self, mock_sleep):
+        mock_chat = MagicMock()
+        mock_chat.send_message.side_effect = ValueError("Invalid parameter")
+
+        with pytest.raises(ValueError):
+            server_ops.send_message_with_retry(mock_chat, "test message", delays=[60, 120, 300])
+
+        assert mock_chat.send_message.call_count == 1
+        mock_sleep.assert_not_called()
