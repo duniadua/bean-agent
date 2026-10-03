@@ -74,7 +74,7 @@ REGISTERED_APPS='{"frontend":"/var/www/frontend"}'
 2. **Di Server Production (Simpan private key sekali secara permanen):**
    Buat file `.env.keys` di folder proyek:
    ```bash
-   echo 'DOTENV_PRIVATE_KEY="8067dbf8c869079d490e964e85d05d2da37d4496a112130759c2ac0bf4beff50"' > .env.keys
+   echo 'DOTENV_PRIVATE_KEY="<YOUR_DOTENV_PRIVATE_KEY>"' > .env.keys
    ```
 3. **Cara Menambah atau Mengubah `REGISTERED_APPS` (Saat .env Sudah Terenkripsi):**
    Jika file `.env` sudah terenkripsi dan Anda ingin menambah/mengubah daftar folder project:
@@ -107,7 +107,7 @@ dotenvx run -- python3 bean_agent.py
 
 *Jika ingin langsung meng-inject key dalam satu baris perintah tanpa file `.env.keys`:*
 ```bash
-DOTENV_PRIVATE_KEY="8067dbf8c869079d490e964e85d05d2da37d4496a112130759c2ac0bf4beff50" dotenvx run -- python3 bean_agent.py
+DOTENV_PRIVATE_KEY="<YOUR_DOTENV_PRIVATE_KEY>" dotenvx run -- python3 bean_agent.py
 ```
 
 #### 🔹 Tanpa `dotenvx` (Menggunakan `.env` biasa):
